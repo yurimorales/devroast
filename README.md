@@ -18,10 +18,10 @@ Construido durante o evento **NLW** da [Rocketseat](https://rocketseat.com.br), 
 
 ```bash
 # Instalar dependencias
-pnpm install
+npm install
 
 # Rodar o servidor de desenvolvimento
-pnpm dev
+npm run dev
 ```
 
 Abra [http://localhost:3000](http://localhost:3000) para ver o app.
