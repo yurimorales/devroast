@@ -1,0 +1,1 @@
+ALTER TABLE "submissions" ALTER COLUMN "score" SET DATA TYPE numeric(3, 1);
