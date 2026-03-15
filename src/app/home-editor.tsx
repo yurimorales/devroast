@@ -19,7 +19,7 @@ function HomeEditor() {
         value={code}
         onChange={setCode}
         maxLength={MAX_CHARS}
-        className="w-full max-w-3xl"
+        className="w-full max-w-3xl max-h-[360px]"
       />
 
       {/* Actions Bar */}
