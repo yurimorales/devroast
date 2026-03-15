@@ -20,11 +20,13 @@ import { LanguageSelector } from "./ui/language-selector";
 type CodeEditorProps = {
   value: string;
   onChange: (value: string) => void;
+  maxLength?: number;
   className?: string;
 };
 
 const THEME = "vesper";
 const MIN_LINES = 16;
+const DEFAULT_MAX_LENGTH = 2000;
 
 function getCurrentLine(textarea: HTMLTextAreaElement): string {
   const original = textarea.value;
@@ -67,7 +69,12 @@ function handleEnter(event: KeyboardEvent, textarea: HTMLTextAreaElement) {
   document.execCommand("insertText", false, `\n${wantedIndentation}`);
 }
 
-function CodeEditor({ value, onChange, className }: CodeEditorProps) {
+function CodeEditor({
+  value,
+  onChange,
+  maxLength = DEFAULT_MAX_LENGTH,
+  className,
+}: CodeEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -143,9 +150,12 @@ function CodeEditor({ value, onChange, className }: CodeEditorProps) {
 
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-      onChange(event.target.value);
+      const newValue = event.target.value;
+      if (newValue.length <= maxLength) {
+        onChange(newValue);
+      }
     },
-    [onChange],
+    [onChange, maxLength],
   );
 
   return (
@@ -215,6 +225,20 @@ function CodeEditor({ value, onChange, className }: CodeEditorProps) {
             style={{ WebkitTextFillColor: "transparent" }}
           />
         </div>
+      </div>
+
+      {/* Character Counter */}
+      <div className="flex items-center justify-end gap-2 h-8 px-4 border-t border-border-primary bg-bg-surface">
+        <span
+          className={twMerge(
+            "font-mono text-xs",
+            value.length > maxLength
+              ? "text-accent-red font-bold"
+              : "text-text-tertiary",
+          )}
+        >
+          {value.length} / {maxLength}
+        </span>
       </div>
     </div>
   );
