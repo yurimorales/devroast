@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ScoreRing } from "@/components/ui/score-ring";
 
 const STATIC_ROAST_DATA = {
@@ -22,25 +21,6 @@ const STATIC_ROAST_DATA = {
   return total;
 }`,
 };
-
-function Navbar() {
-  return (
-    <nav className="flex items-center justify-between h-14 px-10 border-b border-border-primary">
-      <Link href="/" className="flex items-center gap-2">
-        <span className="font-mono text-xl font-bold text-accent-green">$</span>
-        <span className="font-mono text-lg font-medium text-text-primary">
-          devroast
-        </span>
-      </Link>
-      <Link
-        href="/leaderboard"
-        className="font-mono text-[13px] text-text-secondary hover:text-text-primary transition-colors"
-      >
-        leaderboard
-      </Link>
-    </nav>
-  );
-}
 
 function CodePreview({ code }: { code: string }) {
   const lines = code.split("\n");
@@ -69,8 +49,6 @@ export default function RoastResultPage() {
 
   return (
     <main className="flex flex-col min-h-screen">
-      <Navbar />
-
       <div className="flex flex-col gap-10 px-20 py-10">
         {/* Score Hero */}
         <div className="flex items-center gap-12">
