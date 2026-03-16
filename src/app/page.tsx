@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Suspense } from "react";
 import { Metrics } from "@/components/metrics";
 import { HomeEditor } from "./home-editor";
 
@@ -62,17 +61,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer Stats */}
-      <Suspense
-        fallback={
-          <div className="flex items-center gap-6 justify-center pt-8">
-            <span className="font-mono text-xs text-text-tertiary">
-              loading...
-            </span>
-          </div>
-        }
-      >
-        <Metrics />
-      </Suspense>
+      <Metrics />
 
       {/* Spacer */}
       <div className="h-15" />

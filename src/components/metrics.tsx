@@ -2,16 +2,8 @@
 
 import NumberFlow from "@number-flow/react";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc/client-singleton";
-
-function MetricSkeleton() {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="h-4 w-16 bg-bg-elevated animate-pulse rounded" />
-      <div className="h-4 w-8 bg-bg-elevated animate-pulse rounded" />
-    </div>
-  );
-}
 
 function MetricValue({ value, suffix }: { value: number; suffix?: string }) {
   return (
@@ -24,37 +16,42 @@ function MetricValue({ value, suffix }: { value: number; suffix?: string }) {
 }
 
 export function Metrics() {
-  const {
-    data: metrics,
-    isLoading,
-    isError,
-  } = useQuery(trpc.getMetrics.queryOptions());
+  const { data: metrics, isError } = useQuery(trpc.getMetrics.queryOptions());
+  const [displayTotal, setDisplayTotal] = useState(0);
+  const [displayScore, setDisplayScore] = useState(0);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center gap-6 justify-center pt-8">
-        <MetricSkeleton />
-        <span className="font-mono text-xs text-text-tertiary">·</span>
-        <MetricSkeleton />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (metrics) {
+      setDisplayTotal(metrics.totalSubmissions);
+      setDisplayScore(metrics.avgScore);
+    }
+  }, [metrics]);
 
   if (isError || !metrics) {
-    return null;
+    return (
+      <div className="flex items-center gap-6 justify-center pt-8">
+        <span className="font-mono text-xs text-text-tertiary">
+          -- codes roasted
+        </span>
+        <span className="font-mono text-xs text-text-tertiary">·</span>
+        <span className="font-mono text-xs text-text-tertiary">
+          avg score: --/10
+        </span>
+      </div>
+    );
   }
 
   return (
     <div className="flex items-center gap-6 justify-center pt-8">
       <div className="flex items-center gap-2">
-        <MetricValue value={metrics.totalSubmissions} />
+        <MetricValue value={displayTotal} />
         <span className="font-mono text-xs text-text-tertiary">
           codes roasted
         </span>
       </div>
       <span className="font-mono text-xs text-text-tertiary">·</span>
       <div className="flex items-center gap-2">
-        <MetricValue value={metrics.avgScore} suffix="/10" />
+        <MetricValue value={displayScore} suffix="/10" />
         <span className="font-mono text-xs text-text-tertiary">avg score</span>
       </div>
     </div>
