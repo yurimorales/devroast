@@ -26,10 +26,19 @@ src/
     api/            # API routes
   components/       # Feature-level components
     ui/             # Reusable UI primitives (see components/ui/AGENTS.md)
+  db/                 # Drizzle ORM schema, client, and seed
   server/           # tRPC backend (see server/AGENTS.md)
   lib/
     trpc/           # tRPC client setup (see lib/trpc/AGENTS.md)
 ```
+
+## Data Fetching
+
+- **Server Components:** Use `prefetch()` + `<HydrateClient>` to prefetch tRPC queries on the server and hydrate to client components. Import from `@/trpc/server`.
+- **Client Components:** Use `useQuery()` / `useSuspenseQuery()` with `trpc.router.procedure.queryOptions()`. Import `useTRPC` from `@/trpc/client`.
+- **Server-only data:** Use `caller` from `@/trpc/server` for data consumed exclusively in RSC (e.g. dynamic metadata).
+- **Animated numbers:** Use `@number-flow/react` (`<NumberFlow>`) for numeric values that transition from 0 to the loaded value. Prefer `useQuery` with `?? 0` fallback over Suspense/skeleton for these cases.
+- **Loading states:** Prefer `useQuery` + `NumberFlow` (0 → value animation) for numeric stats. Use `Suspense` + skeleton components for content-heavy sections (lists, cards, etc.).
 
 ## Key Decisions
 
@@ -37,5 +46,5 @@ src/
 - `Toggle` uses `@base-ui/react` Switch primitive for accessibility
 - `ScoreRing` has a single fixed size (180px)
 - Biome config has `noUnknownAtRules` ignore list for Tailwind directives (`@theme`, `@apply`, `@utility`)
-- tRPC v11 with TanStack React Query for type-safe API communication
-- Use client singleton pattern for tRPC client components (not provider-based)
+- tRPC context exposes `db` (Drizzle client) — no superjson needed (Drizzle returns plain serializable objects)
+- Feature specs must be written in `specs/` before implementing new features

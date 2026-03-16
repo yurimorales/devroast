@@ -8,7 +8,6 @@ export default async function HomePage() {
 
   await Promise.all([
     queryClient.prefetchQuery(trpc.getMetrics.queryOptions()),
-    queryClient.prefetchQuery(trpc.getShameLeaderboard.queryOptions()),
   ]);
 
   return (

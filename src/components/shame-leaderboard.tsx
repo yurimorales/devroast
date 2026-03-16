@@ -1,11 +1,7 @@
-"use client";
-
-import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useState } from "react";
 import { codeToHtml } from "shiki";
 import { getShikiLanguage, type LanguageId } from "@/lib/detect-language";
-import { trpc } from "@/lib/trpc/client-singleton";
+import { createCaller } from "@/lib/trpc/server";
 
 function scoreColor(score: number): string {
   if (score <= 3) return "text-accent-red";
@@ -13,25 +9,29 @@ function scoreColor(score: number): string {
   return "text-accent-green";
 }
 
-async function HighlightedCode({
+async function getHighlightedCode(code: string, language: string) {
+  const shikiLang = getShikiLanguage(language as LanguageId);
+  const html = await codeToHtml(code, {
+    lang: shikiLang,
+    theme: "vesper",
+  });
+  return html;
+}
+
+async function CodeDisplay({
   code,
   language,
 }: {
   code: string;
   language: string;
 }) {
-  const shikiLang = getShikiLanguage(language as LanguageId);
-  const html = await codeToHtml(code, {
-    lang: shikiLang,
-    theme: "vesper",
-  });
-
+  const html = await getHighlightedCode(code, language);
   const lines = code.split("\n");
 
   return (
     <div className="flex bg-bg-input">
       <div className="flex flex-col items-end gap-1.5 py-2 px-2.5 w-10 border-r border-border-primary bg-bg-surface shrink-0">
-        {lines.map((line, i) => (
+        {lines.map((_, i) => (
           <span
             key={`ln-${i}`}
             className="font-mono text-[11px] leading-tight text-text-tertiary"
@@ -42,12 +42,14 @@ async function HighlightedCode({
       </div>
       <div
         className="flex-1 p-2 overflow-x-auto font-mono text-[11px] leading-tight [&_pre]:!bg-transparent [&_pre]:!m-0 [&_pre]:!p-0 [&_code]:!bg-transparent [&_.line]:leading-[1.65]"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: shiki generates trusted HTML from code strings server-side
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML pre-rendered on server from trusted code
         dangerouslySetInnerHTML={{ __html: html }}
       />
     </div>
   );
 }
+
+import { CollapsibleCode } from "@/components/collapsible-code";
 
 function LeaderboardRow({
   entry,
@@ -62,6 +64,10 @@ function LeaderboardRow({
   isLast: boolean;
 }) {
   const code = entry.code.join("\n");
+  const lines = code.split("\n");
+  const isLongCode = lines.length > 3;
+  const collapsedCode = lines.slice(0, 3).join("\n");
+  const collapsedLines = collapsedCode.split("\n").length;
 
   return (
     <div
@@ -84,40 +90,46 @@ function LeaderboardRow({
         </span>
       </div>
 
-      <CollapsibleCode code={code} language={entry.language} />
+      {isLongCode ? (
+        <CollapsibleCodeWrapper
+          collapsedCode={collapsedCode}
+          expandedCode={code}
+          language={entry.language}
+          collapsedLines={collapsedLines}
+          totalLines={lines.length}
+        />
+      ) : (
+        <CodeDisplay code={code} language={entry.language} />
+      )}
     </div>
   );
 }
 
-function CollapsibleCode({
-  code,
+async function CollapsibleCodeWrapper({
+  collapsedCode,
+  expandedCode,
   language,
+  collapsedLines,
+  totalLines,
 }: {
-  code: string;
+  collapsedCode: string;
+  expandedCode: string;
   language: string;
+  collapsedLines: number;
+  totalLines: number;
 }) {
-  const lines = code.split("\n");
-  const isLongCode = lines.length > 3;
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const visibleCode = isExpanded ? code : lines.slice(0, 3).join("\n");
+  const [collapsedHtml, expandedHtml] = await Promise.all([
+    getHighlightedCode(collapsedCode, language),
+    getHighlightedCode(expandedCode, language),
+  ]);
 
   return (
-    <div className="flex flex-col">
-      <HighlightedCode code={visibleCode} language={language} />
-
-      {isLongCode && (
-        <button
-          type="button"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center justify-center h-8 border-t border-border-primary bg-bg-surface text-xs font-mono text-text-tertiary hover:text-text-secondary transition-colors"
-        >
-          {isExpanded
-            ? "[ - ] collapse"
-            : `[ + ] expand ${lines.length - 3} more lines`}
-        </button>
-      )}
-    </div>
+    <CollapsibleCode
+      collapsedHtml={collapsedHtml}
+      expandedHtml={expandedHtml}
+      collapsedLines={collapsedLines}
+      totalLines={totalLines}
+    />
   );
 }
 
@@ -170,14 +182,11 @@ function LeaderboardSkeleton() {
   );
 }
 
-export function ShameLeaderboard() {
-  const {
-    data: entries,
-    isLoading,
-    isError,
-  } = useQuery(trpc.getShameLeaderboard.queryOptions());
+export async function ShameLeaderboard() {
+  const caller = await createCaller();
+  const entries = await caller.getShameLeaderboard();
 
-  if (isLoading) {
+  if (!entries || entries.length === 0) {
     return (
       <section className="flex flex-col gap-6 w-full max-w-5xl px-10 pb-15">
         <div className="flex items-center gap-2">
@@ -194,10 +203,6 @@ export function ShameLeaderboard() {
         <LeaderboardSkeleton />
       </section>
     );
-  }
-
-  if (isError || !entries) {
-    return null;
   }
 
   return (

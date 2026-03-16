@@ -18,6 +18,8 @@ const SHAME_LEADERBOARD_DATA = [
       "if (x == true) { return true; }",
       "else if (x == false) { return false; }",
       "else { return !false; }",
+      "// this is getting ridiculous",
+      "// why not just use a boolean?",
     ],
     language: "typescript",
   },
