@@ -169,9 +169,57 @@ export function AnimatedMetric() {
 
 This animates from 0 to the loaded value without skeleton/Suspense.
 
+## Parallel Queries with Promise.all
+
+Use `Promise.all` in Server Components to fetch multiple queries in parallel. This reduces page load time by executing all queries simultaneously instead of sequentially.
+
+### Server Component with Parallel Prefetch
+
+```tsx
+import { getQueryClient, trpc } from "@/lib/trpc/server";
+import { Metrics } from "@/components/metrics";
+import { Leaderboard } from "@/components/leaderboard";
+
+export default async function HomePage() {
+  const queryClient = getQueryClient();
+
+  // Execute queries in parallel
+  await Promise.all([
+    queryClient.prefetchQuery(trpc.getMetrics.queryOptions()),
+    queryClient.prefetchQuery(trpc.getLeaderboard.queryOptions()),
+  ]);
+
+  return (
+    <main>
+      <Metrics />
+      <Leaderboard />
+    </main>
+  );
+}
+```
+
+### Why Promise.all?
+
+| Approach | Behavior |
+|----------|----------|
+| Sequential (default) | Query B waits for Query A to complete |
+| Parallel (Promise.all) | Both queries start simultaneously |
+
+**Benefits:**
+- Faster page load (queries run in parallel)
+- Better user experience
+- Server Component renders with all data ready
+
+### When to Use
+
+- Use `Promise.all` for queries that are needed on the same page
+- Each query should be independent (no dependency between them)
+- This replaces Suspense/Skeleton for initial page load
+
 ## Rules
 
 - Always use `superjson` transformer in HTTP links
 - Use client singleton as default for new components
 - Prefer `queryOptions()` over `useQuery()` for better type inference
 - Keep API URL as `/api/trpc` for Next.js App Router
+- Use `Promise.all` to fetch multiple queries in parallel on Server Components

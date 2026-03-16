@@ -14,6 +14,13 @@ export const trpc = createTRPCOptionsProxy<AppRouter>({
   queryClient: getQueryClient,
 });
 
+export async function prefetchQueries(
+  queries: (() => ReturnType<typeof trpc.getMetrics.queryOptions>)[],
+) {
+  const queryClient = getQueryClient();
+  await Promise.all(queries.map((q) => queryClient.prefetchQuery(q())));
+}
+
 export async function createCaller() {
   return appRouter.createCaller(await createTRPCContext());
 }

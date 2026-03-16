@@ -1,9 +1,16 @@
-import { Suspense } from "react";
 import { Metrics } from "@/components/metrics";
 import { ShameLeaderboard } from "@/components/shame-leaderboard";
+import { getQueryClient, trpc } from "@/lib/trpc/server";
 import { HomeEditor } from "./home-editor";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const queryClient = getQueryClient();
+
+  await Promise.all([
+    queryClient.prefetchQuery(trpc.getMetrics.queryOptions()),
+    queryClient.prefetchQuery(trpc.getShameLeaderboard.queryOptions()),
+  ]);
+
   return (
     <main className="flex flex-col items-center">
       {/* Hero */}
@@ -33,25 +40,7 @@ export default function HomePage() {
       <div className="h-15" />
 
       {/* Leaderboard Preview */}
-      <Suspense
-        fallback={
-          <section className="flex flex-col gap-6 w-full max-w-5xl px-10 pb-15">
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-sm font-bold text-accent-green">
-                {"//"}
-              </span>
-              <span className="font-mono text-sm font-bold text-text-primary">
-                shame_leaderboard
-              </span>
-            </div>
-            <p className="font-mono text-[13px] text-text-tertiary -mt-2">
-              {"// the worst code on the internet, ranked by shame"}
-            </p>
-          </section>
-        }
-      >
-        <ShameLeaderboard />
-      </Suspense>
+      <ShameLeaderboard />
     </main>
   );
 }
