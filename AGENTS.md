@@ -22,9 +22,13 @@
 
 ```
 src/
-  app/              # Next.js App Router pages and layouts
-  components/       # Feature-level components (navbar, code-editor, etc.)
-    ui/             # Reusable UI primitives (see ui/AGENTS.md for patterns)
+  app/              # Next.js App Router pages and layouts (see app/AGENTS.md)
+    api/            # API routes
+  components/       # Feature-level components
+    ui/             # Reusable UI primitives (see components/ui/AGENTS.md)
+  server/           # tRPC backend (see server/AGENTS.md)
+  lib/
+    trpc/           # tRPC client setup (see lib/trpc/AGENTS.md)
 ```
 
 ## Key Decisions
@@ -33,3 +37,5 @@ src/
 - `Toggle` uses `@base-ui/react` Switch primitive for accessibility
 - `ScoreRing` has a single fixed size (180px)
 - Biome config has `noUnknownAtRules` ignore list for Tailwind directives (`@theme`, `@apply`, `@utility`)
+- tRPC v11 with TanStack React Query for type-safe API communication
+- Use client singleton pattern for tRPC client components (not provider-based)

@@ -267,3 +267,99 @@ export {
 - [ ] Composição (sub-componentes) para componentes com 2+ áreas de conteúdo distintas
 - [ ] Props simples para primitivos atômicos e configuração numérica/funcional
 - [ ] Adicionar variante na página de exemplos (`/components`)
+
+---
+
+## Dados Assíncronos e Animações
+
+### NumberFlow para Valores Animados
+
+Use `@number-flow/react` para transicionar valores numéricos:
+
+```ts
+"use client";
+
+import { useState, useEffect } from "react";
+import NumberFlow from "@number-flow/react";
+import { useQuery } from "@tanstack/react-query";
+import { trpc } from "@/lib/trpc/client-singleton";
+
+function MetricValue({ value, suffix }: { value: number; suffix?: string }) {
+  return (
+    <NumberFlow
+      value={value}
+      suffix={suffix}
+      className="font-mono text-xs"
+    />
+  );
+}
+
+export function AnimatedMetric() {
+  const { data } = useQuery(trpc.getMetrics.queryOptions());
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    if (data) {
+      setDisplayValue(data.value);
+    }
+  }, [data]);
+
+  return <MetricValue value={displayValue} />;
+}
+```
+
+### Padrão: Valor Inicial Zero
+
+Para métricas e contadores:
+- Inicie com valor 0
+- Quando os dados carregarem, atualize para o valor real
+- NumberFlow animará a transição automaticamente
+
+**Benefícios:**
+- Sem skeleton/Suspense
+- Experiência visual mais fluida
+- Código mais simples
+
+### Quando Usar Skeleton/Suspense
+
+Use skeleton apenas quando:
+- O layout muda significativamente durante o loading
+- O conteúdo é complexo (tabelas, listas grandes)
+- A animação de valor não é suficiente
+
+### Exemplo: Componente de Métricas
+
+```ts
+"use client";
+
+import { useState, useEffect } from "react";
+import NumberFlow from "@number-flow/react";
+import { useQuery } from "@tanstack/react-query";
+import { trpc } from "@/lib/trpc/client-singleton";
+
+export function Metrics() {
+  const { data, isError } = useQuery(trpc.getMetrics.queryOptions());
+  const [total, setTotal] = useState(0);
+  const [avgScore, setAvgScore] = useState(0);
+
+  useEffect(() => {
+    if (data) {
+      setTotal(data.totalSubmissions);
+      setAvgScore(data.avgScore);
+    }
+  }, [data]);
+
+  if (isError) {
+    return <div>Error loading metrics</div>;
+  }
+
+  return (
+    <div className="flex gap-4">
+      <NumberFlow value={total} />
+      <span>codes roasted</span>
+      <NumberFlow value={avgScore} suffix="/10" />
+      <span>avg score</span>
+    </div>
+  );
+}
+```
