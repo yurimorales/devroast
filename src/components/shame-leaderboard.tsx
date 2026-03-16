@@ -2,6 +2,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useState } from "react";
+import { codeToHtml } from "shiki";
+import { getShikiLanguage, type LanguageId } from "@/lib/detect-language";
 import { trpc } from "@/lib/trpc/client-singleton";
 
 function scoreColor(score: number): string {
@@ -10,21 +13,134 @@ function scoreColor(score: number): string {
   return "text-accent-green";
 }
 
+async function HighlightedCode({
+  code,
+  language,
+}: {
+  code: string;
+  language: string;
+}) {
+  const shikiLang = getShikiLanguage(language as LanguageId);
+  const html = await codeToHtml(code, {
+    lang: shikiLang,
+    theme: "vesper",
+  });
+
+  const lines = code.split("\n");
+
+  return (
+    <div className="flex bg-bg-input">
+      <div className="flex flex-col items-end gap-1.5 py-2 px-2.5 w-10 border-r border-border-primary bg-bg-surface shrink-0">
+        {lines.map((line, i) => (
+          <span
+            key={`ln-${i}`}
+            className="font-mono text-[11px] leading-tight text-text-tertiary"
+          >
+            {i + 1}
+          </span>
+        ))}
+      </div>
+      <div
+        className="flex-1 p-2 overflow-x-auto font-mono text-[11px] leading-tight [&_pre]:!bg-transparent [&_pre]:!m-0 [&_pre]:!p-0 [&_code]:!bg-transparent [&_.line]:leading-[1.65]"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: shiki generates trusted HTML from code strings server-side
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </div>
+  );
+}
+
+function LeaderboardRow({
+  entry,
+  isLast,
+}: {
+  entry: {
+    rank: number;
+    score: number;
+    code: string[];
+    language: string;
+  };
+  isLast: boolean;
+}) {
+  const code = entry.code.join("\n");
+
+  return (
+    <div
+      className={`flex flex-col ${isLast ? "" : "border-b border-border-primary"}`}
+    >
+      <div className="flex items-center h-10 px-4 border-b border-border-primary bg-bg-surface">
+        <span
+          className={`w-10 font-mono text-xs ${entry.rank === 1 ? "text-accent-amber" : "text-text-secondary"}`}
+        >
+          #{entry.rank}
+        </span>
+        <span
+          className={`w-16 font-mono text-xs font-bold ${scoreColor(entry.score)}`}
+        >
+          {entry.score.toFixed(1)}
+        </span>
+        <span className="flex-1" />
+        <span className="font-mono text-xs text-text-secondary">
+          {entry.language}
+        </span>
+      </div>
+
+      <CollapsibleCode code={code} language={entry.language} />
+    </div>
+  );
+}
+
+function CollapsibleCode({
+  code,
+  language,
+}: {
+  code: string;
+  language: string;
+}) {
+  const lines = code.split("\n");
+  const isLongCode = lines.length > 3;
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const visibleCode = isExpanded ? code : lines.slice(0, 3).join("\n");
+
+  return (
+    <div className="flex flex-col">
+      <HighlightedCode code={visibleCode} language={language} />
+
+      {isLongCode && (
+        <button
+          type="button"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center justify-center h-8 border-t border-border-primary bg-bg-surface text-xs font-mono text-text-tertiary hover:text-text-secondary transition-colors"
+        >
+          {isExpanded
+            ? "[ - ] collapse"
+            : `[ + ] expand ${lines.length - 3} more lines`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function LeaderboardRowSkeleton() {
   return (
-    <div className="flex px-5 py-4 border-b border-border-primary">
-      <div className="w-12">
-        <div className="h-4 w-4 bg-bg-elevated animate-pulse rounded" />
+    <div className="flex flex-col border-b border-border-primary">
+      <div className="flex items-center h-10 px-4 border-b border-border-primary bg-bg-surface">
+        <div className="w-10">
+          <div className="h-4 w-4 bg-bg-elevated animate-pulse rounded" />
+        </div>
+        <div className="w-16">
+          <div className="h-4 w-8 bg-bg-elevated animate-pulse rounded" />
+        </div>
+        <div className="flex-1" />
+        <div className="h-4 w-16 bg-bg-elevated animate-pulse rounded" />
       </div>
-      <div className="w-18">
-        <div className="h-4 w-8 bg-bg-elevated animate-pulse rounded" />
-      </div>
-      <div className="flex-1 flex flex-col gap-1">
-        <div className="h-4 w-3/4 bg-bg-elevated animate-pulse rounded" />
-        <div className="h-4 w-1/2 bg-bg-elevated animate-pulse rounded" />
-      </div>
-      <div className="w-24">
-        <div className="h-4 w-16 ml-auto bg-bg-elevated animate-pulse rounded" />
+      <div className="flex bg-bg-input h-20">
+        <div className="w-10 border-r border-border-primary bg-bg-surface" />
+        <div className="flex-1 p-2">
+          <div className="h-3 w-full bg-bg-elevated animate-pulse rounded mb-1" />
+          <div className="h-3 w-3/4 bg-bg-elevated animate-pulse rounded mb-1" />
+          <div className="h-3 w-1/2 bg-bg-elevated animate-pulse rounded" />
+        </div>
       </div>
     </div>
   );
@@ -33,17 +149,17 @@ function LeaderboardRowSkeleton() {
 function LeaderboardSkeleton() {
   return (
     <div className="border border-border-primary w-full">
-      <div className="flex items-center h-10 px-5 bg-bg-surface border-b border-border-primary">
-        <span className="w-12 font-mono text-xs font-medium text-text-tertiary">
+      <div className="flex items-center h-10 px-4 bg-bg-surface border-b border-border-primary">
+        <span className="w-10 font-mono text-xs font-medium text-text-tertiary">
           #
         </span>
-        <span className="w-18 font-mono text-xs font-medium text-text-tertiary">
+        <span className="w-16 font-mono text-xs font-medium text-text-tertiary">
           score
         </span>
         <span className="flex-1 font-mono text-xs font-medium text-text-tertiary">
           code
         </span>
-        <span className="w-24 font-mono text-xs font-medium text-text-tertiary text-right">
+        <span className="font-mono text-xs font-medium text-text-tertiary">
           lang
         </span>
       </div>
@@ -86,7 +202,6 @@ export function ShameLeaderboard() {
 
   return (
     <section className="flex flex-col gap-6 w-full max-w-5xl px-10 pb-15">
-      {/* Title Row */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="font-mono text-sm font-bold text-accent-green">
@@ -105,63 +220,20 @@ export function ShameLeaderboard() {
         </Link>
       </div>
 
-      {/* Subtitle */}
       <p className="font-mono text-[13px] text-text-tertiary -mt-2">
         {"// the worst code on the internet, ranked by shame"}
       </p>
 
-      {/* Leaderboard Table */}
       <div className="border border-border-primary w-full">
-        {/* Table Header */}
-        <div className="flex items-center h-10 px-5 bg-bg-surface border-b border-border-primary">
-          <span className="w-12 font-mono text-xs font-medium text-text-tertiary">
-            #
-          </span>
-          <span className="w-18 font-mono text-xs font-medium text-text-tertiary">
-            score
-          </span>
-          <span className="flex-1 font-mono text-xs font-medium text-text-tertiary">
-            code
-          </span>
-          <span className="w-24 font-mono text-xs font-medium text-text-tertiary text-right">
-            lang
-          </span>
-        </div>
-
-        {/* Table Rows */}
         {entries.map((entry, index) => (
-          <div
+          <LeaderboardRow
             key={entry.rank}
-            className={`flex px-5 py-4 ${index < entries.length - 1 ? "border-b border-border-primary" : ""}`}
-          >
-            <span
-              className={`w-12 font-mono text-xs ${entry.rank === 1 ? "text-accent-amber" : "text-text-secondary"}`}
-            >
-              {entry.rank}
-            </span>
-            <span
-              className={`w-18 font-mono text-xs font-bold ${scoreColor(entry.score)}`}
-            >
-              {entry.score.toFixed(1)}
-            </span>
-            <div className="flex-1 flex flex-col gap-0.5">
-              {entry.code.map((line) => (
-                <span
-                  key={line}
-                  className={`font-mono text-xs ${line.startsWith("//") || line.startsWith("--") ? "text-text-tertiary" : "text-text-primary"}`}
-                >
-                  {line}
-                </span>
-              ))}
-            </div>
-            <span className="w-24 font-mono text-xs text-text-secondary text-right">
-              {entry.language}
-            </span>
-          </div>
+            entry={entry}
+            isLast={index === entries.length - 1}
+          />
         ))}
       </div>
 
-      {/* Fade Hint */}
       <p className="font-mono text-xs text-text-tertiary text-center">
         showing top 3 of 2,847 ·{" "}
         <Link
