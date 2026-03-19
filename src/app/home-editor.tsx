@@ -11,7 +11,6 @@ import { useTRPC } from "@/lib/trpc/client";
 function HomeEditor() {
   const [code, setCode] = useState("");
   const [roastMode, setRoastMode] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const trpc = useTRPC();
 
@@ -21,15 +20,14 @@ function HomeEditor() {
         router.push(`/roast/${result.id}`);
       },
       onError: (error) => {
-        setIsLoading(false);
         alert(`Error: ${error.message}`);
+        console.error(`Error: ${error.message}`);
       },
     }),
   );
 
   const handleSubmit = () => {
     if (isEmpty || isOverLimit) return;
-    setIsLoading(true);
     createRoast.mutate({
       code,
       language: "javascript",
@@ -68,10 +66,10 @@ function HomeEditor() {
         <Button
           variant="primary"
           size="lg"
-          disabled={isEmpty || isOverLimit || isLoading}
+          disabled={isEmpty || isOverLimit || createRoast.isPending}
           onClick={handleSubmit}
         >
-          {isLoading ? "$ processing..." : "$ roast_my_code"}
+          {createRoast.isPending ? "$ processing..." : "$ roast_my_code"}
         </Button>
       </div>
     </div>
