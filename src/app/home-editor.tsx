@@ -1,15 +1,43 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CodeEditor } from "@/components/code-editor";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
+import { useTRPC } from "@/lib/trpc/client";
 
 function HomeEditor() {
   const [code, setCode] = useState("");
   const [roastMode, setRoastMode] = useState(true);
-  const MAX_CHARS = 2000;
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const trpc = useTRPC();
 
+  const createRoast = useMutation(
+    trpc.createRoast.mutationOptions({
+      onSuccess: (result) => {
+        router.push(`/roast/${result.id}`);
+      },
+      onError: (error) => {
+        setIsLoading(false);
+        alert(`Error: ${error.message}`);
+      },
+    }),
+  );
+
+  const handleSubmit = () => {
+    if (isEmpty || isOverLimit) return;
+    setIsLoading(true);
+    createRoast.mutate({
+      code,
+      language: "javascript",
+      roastMode,
+    });
+  };
+
+  const MAX_CHARS = 2000;
   const isOverLimit = code.length > MAX_CHARS;
   const isEmpty = code.trim().length === 0;
 
@@ -31,12 +59,19 @@ function HomeEditor() {
             label="roast mode"
           />
           <span className="font-mono text-xs text-text-tertiary">
-            {"// maximum sarcasm enabled"}
+            {roastMode
+              ? "// maximum sarcasm enabled"
+              : "// constructive feedback"}
           </span>
         </div>
 
-        <Button variant="primary" size="lg" disabled={isEmpty || isOverLimit}>
-          $ roast_my_code
+        <Button
+          variant="primary"
+          size="lg"
+          disabled={isEmpty || isOverLimit || isLoading}
+          onClick={handleSubmit}
+        >
+          {isLoading ? "$ processing..." : "$ roast_my_code"}
         </Button>
       </div>
     </div>
