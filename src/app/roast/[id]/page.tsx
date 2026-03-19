@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { Suspense } from "react";
 import { ScoreRing } from "@/components/ui/score-ring";
 import { useTRPC } from "@/lib/trpc/client";
@@ -57,7 +56,6 @@ function RoastResultContent({ id }: { id: string }) {
 
   const { submission, analyses } = data;
 
-  // Determine verdict based on score
   const getVerdict = (score: number) => {
     if (score <= 3) return "needs_serious_help";
     if (score <= 6) return "could_be_better";
@@ -69,7 +67,6 @@ function RoastResultContent({ id }: { id: string }) {
   return (
     <main className="flex flex-col min-h-screen">
       <div className="flex flex-col gap-10 px-20 py-10">
-        {/* Score Hero */}
         <div className="flex items-center gap-12">
           <ScoreRing score={submission.score} />
 
@@ -97,10 +94,8 @@ function RoastResultContent({ id }: { id: string }) {
           </div>
         </div>
 
-        {/* Divider */}
         <div className="h-px w-full bg-border-primary" />
 
-        {/* Submitted Code Section */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <span className="font-mono text-sm font-bold text-accent-green">
@@ -118,27 +113,24 @@ function RoastResultContent({ id }: { id: string }) {
   );
 }
 
+function LoadingFallback() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+      <div className="font-mono text-text-tertiary animate-pulse">
+        $ loading...
+      </div>
+    </div>
+  );
+}
+
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 export default function RoastResultPage({ params }: PageProps) {
   return (
-    <Suspense
-      fallback={
-        <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-          <div className="font-mono text-text-tertiary animate-pulse">
-            $ loading...
-          </div>
-        </div>
-      }
-    >
-      <RoastResultWrapper params={params} />
+    <Suspense fallback={<LoadingFallback />}>
+      <RoastResultContent id={params.id} />
     </Suspense>
   );
-}
-
-async function RoastResultWrapper({ params }: PageProps) {
-  const { id } = await params;
-  return <RoastResultContent id={id} />;
 }
