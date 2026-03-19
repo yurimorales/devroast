@@ -64,4 +64,4 @@ function DiffLine({ type, className, children, ...props }: DiffLineProps) {
   );
 }
 
-export { DiffLine, diffLine, type DiffLineProps, type DiffLineVariants };
+export { DiffLine, type DiffLineProps, type DiffLineVariants, diffLine };

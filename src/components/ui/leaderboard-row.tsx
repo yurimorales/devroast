@@ -84,15 +84,15 @@ function LeaderboardRowLanguage({
 }
 
 export {
-  LeaderboardRowRoot,
-  LeaderboardRowRank,
-  LeaderboardRowScore,
   LeaderboardRowCode,
-  LeaderboardRowLanguage,
-  leaderboardRow,
-  type LeaderboardRowRootProps,
-  type LeaderboardRowRankProps,
-  type LeaderboardRowScoreProps,
   type LeaderboardRowCodeProps,
+  LeaderboardRowLanguage,
   type LeaderboardRowLanguageProps,
+  LeaderboardRowRank,
+  type LeaderboardRowRankProps,
+  LeaderboardRowRoot,
+  type LeaderboardRowRootProps,
+  LeaderboardRowScore,
+  type LeaderboardRowScoreProps,
+  leaderboardRow,
 };

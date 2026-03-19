@@ -78,12 +78,8 @@
           "name": "analyses_submission_id_submissions_id_fk",
           "tableFrom": "analyses",
           "tableTo": "submissions",
-          "columnsFrom": [
-            "submission_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["submission_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -210,12 +206,8 @@
           "name": "suggestions_analysis_id_analyses_id_fk",
           "tableFrom": "suggestions",
           "tableTo": "analyses",
-          "columnsFrom": [
-            "analysis_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["analysis_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -256,20 +248,12 @@
     "public.severity_enum": {
       "name": "severity_enum",
       "schema": "public",
-      "values": [
-        "critical",
-        "warning",
-        "good"
-      ]
+      "values": ["critical", "warning", "good"]
     },
     "public.submission_status_enum": {
       "name": "submission_status_enum",
       "schema": "public",
-      "values": [
-        "pending",
-        "analyzed",
-        "error"
-      ]
+      "values": ["pending", "analyzed", "error"]
     }
   },
   "schemas": {},

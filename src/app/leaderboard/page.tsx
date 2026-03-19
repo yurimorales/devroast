@@ -1,4 +1,8 @@
-import { LeaderboardContent } from "@/components/leaderboard-content";
+import { Suspense } from "react";
+import {
+  LeaderboardContent,
+  LeaderboardContentSkeleton,
+} from "@/components/leaderboard-content";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 
 export default async function LeaderboardPage() {
@@ -11,7 +15,9 @@ export default async function LeaderboardPage() {
 
   return (
     <main className="flex flex-col min-h-screen">
-      <LeaderboardContent />
+      <Suspense fallback={<LeaderboardContentSkeleton />}>
+        <LeaderboardContent />
+      </Suspense>
     </main>
   );
 }
