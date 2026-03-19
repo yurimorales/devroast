@@ -1,5 +1,9 @@
+import { Suspense } from "react";
 import { Metrics } from "@/components/metrics";
-import { ShameLeaderboard } from "@/components/shame-leaderboard";
+import {
+  ShameLeaderboard,
+  ShameLeaderboardSkeleton,
+} from "@/components/shame-leaderboard";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 import { HomeEditor } from "./home-editor";
 
@@ -8,6 +12,7 @@ export default async function HomePage() {
 
   await Promise.all([
     queryClient.prefetchQuery(trpc.getMetrics.queryOptions()),
+    queryClient.prefetchQuery(trpc.getShameLeaderboard.queryOptions()),
   ]);
 
   return (
@@ -39,7 +44,9 @@ export default async function HomePage() {
       <div className="h-15" />
 
       {/* Leaderboard Preview */}
-      <ShameLeaderboard />
+      <Suspense fallback={<ShameLeaderboardSkeleton />}>
+        <ShameLeaderboard />
+      </Suspense>
     </main>
   );
 }

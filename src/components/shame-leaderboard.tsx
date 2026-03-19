@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { codeToHtml } from "shiki";
+import type { BundledLanguage } from "shiki";
+import { CollapsibleCode } from "@/components/ui/collapsible-code";
 import { getShikiLanguage, type LanguageId } from "@/lib/detect-language";
 import { createCaller } from "@/lib/trpc/server";
 
@@ -8,48 +9,6 @@ function scoreColor(score: number): string {
   if (score <= 6) return "text-accent-amber";
   return "text-accent-green";
 }
-
-async function getHighlightedCode(code: string, language: string) {
-  const shikiLang = getShikiLanguage(language as LanguageId);
-  const html = await codeToHtml(code, {
-    lang: shikiLang,
-    theme: "vesper",
-  });
-  return html;
-}
-
-async function CodeDisplay({
-  code,
-  language,
-}: {
-  code: string;
-  language: string;
-}) {
-  const html = await getHighlightedCode(code, language);
-  const lines = code.split("\n");
-
-  return (
-    <div className="flex bg-bg-input">
-      <div className="flex flex-col items-end gap-1.5 py-2 px-2.5 w-10 border-r border-border-primary bg-bg-surface shrink-0">
-        {lines.map((_, i) => (
-          <span
-            key={`ln-${i}`}
-            className="font-mono text-[11px] leading-tight text-text-tertiary"
-          >
-            {i + 1}
-          </span>
-        ))}
-      </div>
-      <div
-        className="flex-1 p-2 overflow-x-auto font-mono text-[11px] leading-tight [&_pre]:!bg-transparent [&_pre]:!m-0 [&_pre]:!p-0 [&_code]:!bg-transparent [&_.line]:leading-[1.65]"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: HTML pre-rendered on server from trusted code
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
-    </div>
-  );
-}
-
-import { CollapsibleCode } from "@/components/collapsible-code";
 
 function LeaderboardRow({
   entry,
@@ -64,10 +23,7 @@ function LeaderboardRow({
   isLast: boolean;
 }) {
   const code = entry.code.join("\n");
-  const lines = code.split("\n");
-  const isLongCode = lines.length > 3;
-  const collapsedCode = lines.slice(0, 3).join("\n");
-  const collapsedLines = collapsedCode.split("\n").length;
+  const shikiLang = getShikiLanguage(entry.language as LanguageId);
 
   return (
     <div
@@ -90,46 +46,12 @@ function LeaderboardRow({
         </span>
       </div>
 
-      {isLongCode ? (
-        <CollapsibleCodeWrapper
-          collapsedCode={collapsedCode}
-          expandedCode={code}
-          language={entry.language}
-          collapsedLines={collapsedLines}
-          totalLines={lines.length}
-        />
-      ) : (
-        <CodeDisplay code={code} language={entry.language} />
-      )}
+      <CollapsibleCode
+        code={code}
+        lang={shikiLang as BundledLanguage}
+        maxLines={5}
+      />
     </div>
-  );
-}
-
-async function CollapsibleCodeWrapper({
-  collapsedCode,
-  expandedCode,
-  language,
-  collapsedLines,
-  totalLines,
-}: {
-  collapsedCode: string;
-  expandedCode: string;
-  language: string;
-  collapsedLines: number;
-  totalLines: number;
-}) {
-  const [collapsedHtml, expandedHtml] = await Promise.all([
-    getHighlightedCode(collapsedCode, language),
-    getHighlightedCode(expandedCode, language),
-  ]);
-
-  return (
-    <CollapsibleCode
-      collapsedHtml={collapsedHtml}
-      expandedHtml={expandedHtml}
-      collapsedLines={collapsedLines}
-      totalLines={totalLines}
-    />
   );
 }
 
@@ -146,14 +68,7 @@ function LeaderboardRowSkeleton() {
         <div className="flex-1" />
         <div className="h-4 w-16 bg-bg-elevated animate-pulse rounded" />
       </div>
-      <div className="flex bg-bg-input h-20">
-        <div className="w-10 border-r border-border-primary bg-bg-surface" />
-        <div className="flex-1 p-2">
-          <div className="h-3 w-full bg-bg-elevated animate-pulse rounded mb-1" />
-          <div className="h-3 w-3/4 bg-bg-elevated animate-pulse rounded mb-1" />
-          <div className="h-3 w-1/2 bg-bg-elevated animate-pulse rounded" />
-        </div>
-      </div>
+      <div className="h-32 bg-bg-input" />
     </div>
   );
 }
@@ -182,28 +97,35 @@ function LeaderboardSkeleton() {
   );
 }
 
+export function ShameLeaderboardSkeleton() {
+  return (
+    <section className="flex flex-col gap-6 w-full max-w-5xl px-10 pb-15">
+      <div className="flex items-center gap-2">
+        <div className="h-5 w-28 bg-bg-elevated animate-pulse rounded" />
+      </div>
+      <div className="h-4 w-64 bg-bg-elevated animate-pulse rounded" />
+      <div className="border border-border-primary w-full">
+        <LeaderboardRowSkeleton />
+        <LeaderboardRowSkeleton />
+        <LeaderboardRowSkeleton />
+      </div>
+      <div className="flex justify-center gap-2">
+        <div className="h-3 w-20 bg-bg-elevated animate-pulse rounded" />
+        <div className="h-3 w-24 bg-bg-elevated animate-pulse rounded" />
+      </div>
+    </section>
+  );
+}
+
 export async function ShameLeaderboard() {
   const caller = await createCaller();
-  const entries = await caller.getShameLeaderboard();
 
-  if (!entries || entries.length === 0) {
-    return (
-      <section className="flex flex-col gap-6 w-full max-w-5xl px-10 pb-15">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-sm font-bold text-accent-green">
-            {"//"}
-          </span>
-          <span className="font-mono text-sm font-bold text-text-primary">
-            shame_leaderboard
-          </span>
-        </div>
-        <p className="font-mono text-[13px] text-text-tertiary -mt-2">
-          {"// the worst code on the internet, ranked by shame"}
-        </p>
-        <LeaderboardSkeleton />
-      </section>
-    );
-  }
+  const [entries, metrics] = await Promise.all([
+    caller.getShameLeaderboard(),
+    caller.getMetrics(),
+  ]);
+
+  const hasEntries = entries && entries.length > 0;
 
   return (
     <section className="flex flex-col gap-6 w-full max-w-5xl px-10 pb-15">
@@ -229,25 +151,32 @@ export async function ShameLeaderboard() {
         {"// the worst code on the internet, ranked by shame"}
       </p>
 
-      <div className="border border-border-primary w-full">
-        {entries.map((entry, index) => (
-          <LeaderboardRow
-            key={entry.rank}
-            entry={entry}
-            isLast={index === entries.length - 1}
-          />
-        ))}
-      </div>
+      {!hasEntries && <LeaderboardSkeleton />}
 
-      <p className="font-mono text-xs text-text-tertiary text-center">
-        showing top 3 of 2,847 ·{" "}
-        <Link
-          href="/leaderboard"
-          className="text-text-secondary hover:text-text-primary transition-colors"
-        >
-          view full leaderboard {">>"}
-        </Link>
-      </p>
+      {hasEntries && (
+        <div className="border border-border-primary w-full">
+          {entries.map((entry, index) => (
+            <LeaderboardRow
+              key={entry.rank}
+              entry={entry}
+              isLast={index === entries.length - 1}
+            />
+          ))}
+        </div>
+      )}
+
+      {hasEntries && (
+        <p className="font-mono text-xs text-text-tertiary text-center">
+          showing top 3 of {metrics.totalSubmissions.toLocaleString()} · avg
+          score: {metrics.avgScore.toFixed(1)}/10 ·{" "}
+          <Link
+            href="/leaderboard"
+            className="text-text-secondary hover:text-text-primary transition-colors"
+          >
+            view full leaderboard {">>"}
+          </Link>
+        </p>
+      )}
     </section>
   );
 }

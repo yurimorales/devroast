@@ -22,14 +22,15 @@
 
 ```
 src/
-  app/              # Next.js App Router pages and layouts (see app/AGENTS.md)
+  app/              # Next.js App Router (see app/AGENTS.md)
     api/            # API routes
-  components/       # Feature-level components
+  components/       # Feature components (see components/AGENTS.md)
     ui/             # Reusable UI primitives (see components/ui/AGENTS.md)
-  db/                 # Drizzle ORM schema, client, and seed
+  db/               # Drizzle ORM schema and CRUD (see db/AGENTS.md)
   server/           # tRPC backend (see server/AGENTS.md)
   lib/
     trpc/           # tRPC client setup (see lib/trpc/AGENTS.md)
+specs/              # Feature specs (see specs/AGENTS.md)
 ```
 
 ## Data Fetching
