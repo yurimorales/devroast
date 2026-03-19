@@ -71,9 +71,10 @@ function LeaderboardEntry({
           })}
         </div>
         <div className="flex flex-col gap-1.5 px-4 py-3 bg-bg-input">
-          {entry.code.map((line) => (
+          {entry.code.map((line, idx) => (
             <span
-              key={line}
+              // biome-ignore lint/suspicious/noArrayIndexKey: static code lines won't reorder
+              key={`code-${idx}`}
               className={`font-mono text-xs ${
                 line.startsWith("//") || line.startsWith("--")
                   ? "text-text-tertiary"
@@ -128,7 +129,11 @@ export function LeaderboardContent() {
           </span>
           <span className="font-mono text-xs text-text-tertiary">·</span>
           <span className="font-mono text-xs text-text-tertiary">
-            avg score: <NumberFlow value={avgScore} />
+            avg score:{" "}
+            <NumberFlow
+              value={avgScore}
+              format={{ maximumFractionDigits: 0 }}
+            />
             /10
           </span>
         </div>
