@@ -196,7 +196,59 @@ import { analyzeCode } from "@/lib/ai/gemini";
 import { z } from "zod";
 ```
 
-- [ ] **Step 3: Add getRoast query**
+- [ ] **Step 2: Add createRoast mutation**
+
+Add to the router (after getLeaderboardStats):
+
+```ts
+createRoast: baseProcedure
+  .input(
+    z.object({
+      code: z.string().min(1).max(2000),
+      language: z.string(),
+      roastMode: z.boolean().default(true),
+    })
+  )
+  .mutation(async ({ input }) => {
+    // Create submission with pending status - let DB generate ID
+    const [submission] = await db.insert(submissions).values({
+      code: input.code,
+      language: input.language,
+      score: "0",
+      roastMode: input.roastMode,
+      status: "pending",
+    }).returning();
+
+    const submissionId = submission.id;
+
+    try {
+      // Call Gemini API
+      const result = await analyzeCode(input.code, input.roastMode);
+
+      // Update submission with score
+      await db.update(submissions).set({ score: result.score.toString(), status: "analyzed" }).where(eq(submissions.id, submissionId));
+
+      // Create analyses
+      for (const analysis of result.analyses) {
+        await db.insert(analyses).values({
+          submissionId: submissionId,
+          severity: analysis.severity,
+          message: analysis.message,
+          lineStart: analysis.line ?? null,
+          lineEnd: analysis.line ?? null,
+          ruleCode: null,
+        });
+      }
+
+      return { id: submissionId };
+    } catch (error) {
+      await db.update(submissions).set({ status: "error" }).where(eq(submissions.id, submissionId));
+      throw error;
+    }
+  }),
+```
+
+- [ ] **Step 4: Add getRoast query**
 
 Add to the router:
 
@@ -236,13 +288,13 @@ getRoast: baseProcedure
   }),
 ```
 
-- [ ] **Step 4: Run typecheck**
+- [ ] **Step 5: Run typecheck**
 
 ```bash
 npx tsc --noEmit
 ```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add src/server/routers/_app.ts
