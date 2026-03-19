@@ -68,7 +68,7 @@ export async function getSubmissionsWithAnalyses(limit = 50) {
 }
 
 export async function getLeaderboard(limit = 20) {
-  const query = sql`
+  const rows = await db.execute(sql`
     SELECT 
       s.id,
       s.code,
@@ -79,8 +79,14 @@ export async function getLeaderboard(limit = 20) {
     WHERE s.status = 'analyzed'
     ORDER BY s.score ASC, s.created_at DESC
     LIMIT ${limit}
-  `;
-  return query;
+  `);
+  return rows as unknown as {
+    id: string;
+    code: string;
+    language: string;
+    score: string;
+    created_at: Date;
+  }[];
 }
 
 export async function updateSubmissionStatus(

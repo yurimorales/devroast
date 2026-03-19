@@ -1,3 +1,4 @@
+import { getLeaderboard } from "@/db/submissions";
 import { baseProcedure, createTRPCRouter } from "../init";
 
 const SHAME_LEADERBOARD_DATA = [
@@ -41,6 +42,17 @@ export const appRouter = createTRPCRouter({
 
   getShameLeaderboard: baseProcedure.query(async () => {
     return SHAME_LEADERBOARD_DATA;
+  }),
+
+  getLeaderboard: baseProcedure.query(async () => {
+    const rows = await getLeaderboard(20);
+    return rows.map((row, idx) => ({
+      rank: idx + 1,
+      score: parseFloat(row.score),
+      code: row.code.split("\n"),
+      language: row.language,
+      lines: row.code.split("\n").length,
+    }));
   }),
 });
 
