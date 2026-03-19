@@ -191,64 +191,9 @@ git commit -m "feat: add Gemini API service"
 Add to top of `_app.ts`:
 ```ts
 import { analyses } from "@/db/schema/analyses";
-import { createSubmission, updateSubmissionStatus, updateSubmissionScore } from "@/db/submissions";
+import { submissions } from "@/db/schema/submissions";
 import { analyzeCode } from "@/lib/ai/gemini";
 import { z } from "zod";
-import { v4 as uuidv4 } from "uuid";
-```
-
-- [ ] **Step 2: Add createRoast mutation**
-
-Add to the router (after getLeaderboardStats):
-
-```ts
-createRoast: baseProcedure
-  .input(
-    z.object({
-      code: z.string().min(1).max(2000),
-      language: z.string(),
-      roastMode: z.boolean().default(true),
-    })
-  )
-  .mutation(async ({ input }) => {
-    const submissionId = uuidv4();
-    
-    // Create submission with pending status
-    await createSubmission({
-      id: submissionId,
-      code: input.code,
-      language: input.language,
-      score: "0",
-      roastMode: input.roastMode,
-      status: "pending",
-    });
-
-    try {
-      // Call Gemini API
-      const result = await analyzeCode(input.code, input.roastMode);
-
-      // Update submission with score
-      await updateSubmissionScore(submissionId, result.score.toString());
-
-      // Create analyses
-      for (const analysis of result.analyses) {
-        await db.insert(analyses).values({
-          id: uuidv4(),
-          submissionId,
-          severity: analysis.severity,
-          message: analysis.message,
-          lineStart: analysis.line ?? null,
-          lineEnd: analysis.line ?? null,
-          ruleCode: null,
-        });
-      }
-
-      return { id: submissionId };
-    } catch (error) {
-      await updateSubmissionStatus(submissionId, "error");
-      throw error;
-    }
-  }),
 ```
 
 - [ ] **Step 3: Add getRoast query**
