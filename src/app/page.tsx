@@ -7,6 +7,8 @@ import {
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 import { HomeEditor } from "./home-editor";
 
+export const revalidate = 3600;
+
 export default async function HomePage() {
   const queryClient = getQueryClient();
 

@@ -94,12 +94,8 @@ export function LeaderboardContent() {
   const { data: entries } = useQuery(trpc.getLeaderboard.queryOptions());
   const { data: stats } = useQuery(trpc.getLeaderboardStats.queryOptions());
 
-  if (!entries || entries.length === 0) {
-    return (
-      <div className="text-text-tertiary font-mono text-sm">
-        No entries found
-      </div>
-    );
+  if (!entries) {
+    return <LeaderboardContentSkeleton />;
   }
 
   const totalSubmissions = stats?.totalSubmissions ?? 0;
