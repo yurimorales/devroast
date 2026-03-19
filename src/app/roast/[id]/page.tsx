@@ -1,26 +1,10 @@
-import { ScoreRing } from "@/components/ui/score-ring";
+"use client";
 
-const STATIC_ROAST_DATA = {
-  score: 3.5,
-  verdict: "needs_serious_help",
-  title:
-    '"this code looks like it was written during a power outage... in 2005."',
-  language: "javascript",
-  lines: 7,
-  code: `function calculateTotal(items) {
-  var total = 0;
-  for (var i = 0; i < items.length; i++) {
-    total = total + items[i].price;
-  }
-  if (total > 100) {
-    console.log("discount applied");
-    total = total * 0.9;
-  }
-  // TODO: handle tax calculation
-  // TODO: handle currency conversion
-  return total;
-}`,
-};
+import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { ScoreRing } from "@/components/ui/score-ring";
+import { useTRPC } from "@/lib/trpc/client";
 
 function CodePreview({ code }: { code: string }) {
   const lines = code.split("\n");
@@ -44,15 +28,50 @@ function CodePreview({ code }: { code: string }) {
   );
 }
 
-export default function RoastResultPage() {
-  const { score, verdict, title, language, lines, code } = STATIC_ROAST_DATA;
+function RoastResultContent({ id }: { id: string }) {
+  const trpc = useTRPC();
+  const { data, isLoading, error } = useQuery(
+    trpc.getRoast.queryOptions({ id }),
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <div className="font-mono text-text-tertiary animate-pulse">
+          $ analyzing your code...
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <span className="font-mono text-accent-red">
+          Error:{" "}
+          {(error as unknown as Error)?.message ?? "Failed to load roast"}
+        </span>
+      </div>
+    );
+  }
+
+  const { submission, analyses } = data;
+
+  // Determine verdict based on score
+  const getVerdict = (score: number) => {
+    if (score <= 3) return "needs_serious_help";
+    if (score <= 6) return "could_be_better";
+    return "not_bad";
+  };
+
+  const verdict = getVerdict(submission.score);
 
   return (
     <main className="flex flex-col min-h-screen">
       <div className="flex flex-col gap-10 px-20 py-10">
         {/* Score Hero */}
         <div className="flex items-center gap-12">
-          <ScoreRing score={score} />
+          <ScoreRing score={submission.score} />
 
           <div className="flex flex-col gap-4 flex-1">
             <div className="flex items-center gap-2">
@@ -63,25 +82,18 @@ export default function RoastResultPage() {
             </div>
 
             <p className="font-mono text-xl leading-relaxed text-text-primary">
-              {title}
+              {analyses[0]?.message ?? "Code analyzed successfully"}
             </p>
 
             <div className="flex items-center gap-4">
               <span className="font-mono text-xs text-text-tertiary">
-                lang: {language}
+                lang: {submission.language}
               </span>
               <span className="font-mono text-xs text-text-tertiary">·</span>
               <span className="font-mono text-xs text-text-tertiary">
-                {lines} lines
+                {submission.code.split("\n").length} lines
               </span>
             </div>
-
-            <button
-              type="button"
-              className="flex items-center gap-1.5 w-fit px-4 py-2 font-mono text-xs text-text-primary border border-border-primary hover:bg-bg-elevated transition-colors"
-            >
-              $ share_roast
-            </button>
           </div>
         </div>
 
@@ -99,9 +111,34 @@ export default function RoastResultPage() {
             </span>
           </div>
 
-          <CodePreview code={code} />
+          <CodePreview code={submission.code} />
         </div>
       </div>
     </main>
   );
+}
+
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function RoastResultPage({ params }: PageProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+          <div className="font-mono text-text-tertiary animate-pulse">
+            $ loading...
+          </div>
+        </div>
+      }
+    >
+      <RoastResultWrapper params={params} />
+    </Suspense>
+  );
+}
+
+async function RoastResultWrapper({ params }: PageProps) {
+  const { id } = await params;
+  return <RoastResultContent id={id} />;
 }
