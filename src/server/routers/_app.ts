@@ -1,3 +1,6 @@
+import { eq, sql } from "drizzle-orm";
+import { db } from "@/db";
+import { submissions } from "@/db/schema";
 import { getLeaderboard } from "@/db/submissions";
 import { baseProcedure, createTRPCRouter } from "../init";
 
@@ -53,6 +56,21 @@ export const appRouter = createTRPCRouter({
       language: row.language,
       lines: row.code.split("\n").length,
     }));
+  }),
+
+  getLeaderboardStats: baseProcedure.query(async () => {
+    const result = await db
+      .select({
+        count: sql<number>`count(*)`,
+        avg: sql<number>`avg(${submissions.score})`,
+      })
+      .from(submissions)
+      .where(eq(submissions.status, "analyzed"));
+
+    return {
+      totalSubmissions: result[0]?.count ?? 0,
+      avgScore: result[0]?.avg ? parseFloat(String(result[0].avg)) : 0,
+    };
   }),
 });
 
