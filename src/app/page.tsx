@@ -4,19 +4,9 @@ import {
   ShameLeaderboard,
   ShameLeaderboardSkeleton,
 } from "@/components/shame-leaderboard";
-import { getQueryClient, trpc } from "@/lib/trpc/server";
 import { HomeEditor } from "./home-editor";
 
-export const revalidate = 3600;
-
 export default async function HomePage() {
-  const queryClient = getQueryClient();
-
-  await Promise.all([
-    queryClient.prefetchQuery(trpc.getMetrics.queryOptions()),
-    queryClient.prefetchQuery(trpc.getShameLeaderboard.queryOptions()),
-  ]);
-
   return (
     <main className="flex flex-col items-center">
       {/* Hero */}

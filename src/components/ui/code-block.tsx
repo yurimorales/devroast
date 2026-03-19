@@ -10,6 +10,8 @@ type CodeBlockProps = {
 };
 
 async function CodeBlock({ code, lang, filename, className }: CodeBlockProps) {
+  "use cache";
+
   const html = await codeToHtml(code, {
     lang,
     theme: "vesper",

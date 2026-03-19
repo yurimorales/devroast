@@ -1,8 +1,6 @@
-"use client";
-
 import NumberFlow from "@number-flow/react";
-import { useQuery } from "@tanstack/react-query";
-import { trpc } from "@/lib/trpc/client-singleton";
+import { cacheLife } from "next/cache";
+import { createCaller } from "@/lib/trpc/server";
 
 function scoreColor(score: number): string {
   if (score <= 3) return "text-accent-red";
@@ -90,13 +88,16 @@ function LeaderboardEntry({
   );
 }
 
-export function LeaderboardContent() {
-  const { data: entries } = useQuery(trpc.getLeaderboard.queryOptions());
-  const { data: stats } = useQuery(trpc.getLeaderboardStats.queryOptions());
+export async function LeaderboardContent() {
+  "use cache";
+  cacheLife({ revalidate: 3600 }); // 1 hour
 
-  if (!entries) {
-    return <LeaderboardContentSkeleton />;
-  }
+  const caller = await createCaller();
+
+  const [entries, stats] = await Promise.all([
+    caller.getLeaderboard(),
+    caller.getLeaderboardStats(),
+  ]);
 
   const totalSubmissions = stats?.totalSubmissions ?? 0;
   const avgScore = stats?.avgScore ?? 0;

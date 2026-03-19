@@ -5,8 +5,6 @@ import {
 } from "@/components/leaderboard-content";
 import { getQueryClient, trpc } from "@/lib/trpc/server";
 
-export const revalidate = 3600;
-
 export default async function LeaderboardPage() {
   const queryClient = getQueryClient();
 

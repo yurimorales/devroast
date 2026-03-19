@@ -1,3 +1,4 @@
+import { cacheLife } from "next/cache";
 import Link from "next/link";
 import type { BundledLanguage } from "shiki";
 import { CollapsibleCode } from "@/components/ui/collapsible-code";
@@ -118,6 +119,9 @@ export function ShameLeaderboardSkeleton() {
 }
 
 export async function ShameLeaderboard() {
+  "use cache";
+  cacheLife({ revalidate: 3600 }); // 1 hour
+
   const caller = await createCaller();
 
   const [entries, metrics] = await Promise.all([
