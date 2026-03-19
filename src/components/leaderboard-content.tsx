@@ -58,16 +58,22 @@ function LeaderboardEntry({
 
       <div className="flex">
         <div className="flex flex-col items-end gap-1.5 px-3 py-3 bg-bg-surface border-r border-border-primary min-w-10">
-          {entry.code.map((_, idx) => (
-            <span key={idx} className="font-mono text-xs text-text-tertiary">
-              {idx + 1}
-            </span>
-          ))}
+          {entry.code.map((_line, _idx) => {
+            const lineNumber = _idx + 1;
+            return (
+              <span
+                key={`ln-${lineNumber}`}
+                className="font-mono text-xs text-text-tertiary"
+              >
+                {lineNumber}
+              </span>
+            );
+          })}
         </div>
         <div className="flex flex-col gap-1.5 px-4 py-3 bg-bg-input">
-          {entry.code.map((line, idx) => (
+          {entry.code.map((line) => (
             <span
-              key={idx}
+              key={line}
               className={`font-mono text-xs ${
                 line.startsWith("//") || line.startsWith("--")
                   ? "text-text-tertiary"
@@ -114,7 +120,10 @@ export function LeaderboardContent() {
         </p>
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs text-text-tertiary">
-            <NumberFlow value={totalSubmissions} />
+            <NumberFlow
+              value={totalSubmissions}
+              format={{ maximumFractionDigits: 0 }}
+            />
             submissions
           </span>
           <span className="font-mono text-xs text-text-tertiary">·</span>
