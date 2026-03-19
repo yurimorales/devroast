@@ -45,7 +45,7 @@ GEMINI_API_KEY=your_api_key_here
 
 **.env** (não versionado):
 ```
-GEMINI_API_KEY=AIzaSyAHvlRroztgj0Gbm1FJii48tIQOvsPaLis
+GEMINI_API_KEY=SUA_API_KEY_AQUI
 ```
 
 ### tRPC Procedures
@@ -106,14 +106,16 @@ Respond with JSON:
 - [ ] Criar .env.example
 
 ### Fase 2: Backend
-- [ ] Adicionar createRoast mutation em _app.ts
-- [ ] Adicionar getRoast query em _app.ts
-- [ ] Criar serviço Gemini em lib/ai/gemini.ts
+- [ ] Adicionar createRoast mutation em `src/server/routers/_app.ts`
+- [ ] Adicionar getRoast query em `src/server/routers/_app.ts`
+- [ ] Criar serviço Gemini em `src/lib/ai/gemini.ts`
 
 ### Fase 3: Frontend Integration
 - [ ] Conectar HomeEditor botão ao mutation
-- [ ] Implementar router.push após mutation
-- [ ] Atualizar /roast/[id] para buscar dados reais
+  - Usar `useTRPC().createRoast.useMutation()` 
+  - Em `onSuccess`: `router.push('/roast/${result.id}')`
+  - Em `onError`: mostrar mensagem de erro
+- [ ] Atualizar /roast/[id] para buscar dados reais via `trpc.getRoast.useQuery({ id })`
 
 ---
 
