@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = "gemini-1.5-flash-002";
+const GEMINI_MODEL = "gemini-2.0-flash-lite";
 
 const RoastResponseSchema = z.object({
   score: z.number().min(0).max(10),
@@ -57,7 +57,7 @@ export async function analyzeCode(
   const fullPrompt = `${prompt}\n\nCode to analyze:\n\`\`\`\n${code}\n\`\`\``;
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-002:generateContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
     {
       method: "POST",
       headers: {
